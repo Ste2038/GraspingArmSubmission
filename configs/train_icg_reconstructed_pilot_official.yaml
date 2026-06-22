@@ -1,0 +1,62 @@
+wrapper:
+  run_name: icg_reconstructed_pilot
+  max_epochs: 1
+  validation_model_modes:
+    - eval
+    - eval_train_norm
+  loss_weights:
+    loss_ce: 1.0
+    loss_mask: 1.0
+    loss_dice: 1.0
+    loss_sdf: 1.0
+    loss_grasp_scene: 1.0
+    loss_grasp_width_scene: 1.0
+  adapter:
+    _target_: scripts.icg_training_lib.OfficialICGNetBatchAdapter
+    quantization_size: 0.003
+    require_cuda: true
+data:
+  train_collation:
+    _target_: datasets.utils.VoxelizeCollateSDF
+    mode: train
+    voxel_size: 0.003
+  validation_collation:
+    _target_: datasets.utils.VoxelizeCollateSDF
+    mode: val
+    voxel_size: 0.003
+  train_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    num_workers: 0
+    pin_memory: false
+    shuffle: true
+  validation_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    num_workers: 0
+    pin_memory: false
+    shuffle: false
+  train_dataset:
+    _target_: icg_net.data.giga_contact_dataset.GigaContactDataset
+    data_dir:
+      - data/icg_reconstructed/canonical/processed/packed_2M_contact_0
+      - data/icg_reconstructed/canonical/processed/pile_2M_contact_0
+    data_percent: 1.0
+    mode: train
+    num_sdf_points: 32768
+    num_grasp_points_scene: 128
+    load_grasps: true
+    balance_grasps: true
+    positive_grasp_fraction: 0.5
+  validation_dataset:
+    _target_: icg_net.data.giga_contact_dataset.GigaContactDataset
+    data_dir:
+      - data/icg_reconstructed/canonical/processed/packed_2M_contact_0
+      - data/icg_reconstructed/canonical/processed/pile_2M_contact_0
+    data_percent: 1.0
+    mode: val
+    num_sdf_points: 32768
+    num_grasp_points_scene: 128
+    load_grasps: true
+    balance_grasps: true
+    positive_grasp_fraction: 0.5

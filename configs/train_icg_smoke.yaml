@@ -1,0 +1,72 @@
+wrapper:
+  run_name: icg_smoke_train
+  max_epochs: 1
+  loss_weights:
+    loss_ce: 1.0
+    loss_mask: 1.0
+    loss_dice: 1.0
+    loss_sdf: 1.0
+    loss_grasp_scene: 1.0
+    loss_grasp_width_scene: 1.0
+  adapter:
+    _target_: scripts.icg_training_lib.SyntheticSmokeAdapter
+  train_dataset:
+    _target_: scripts.icg_training_lib.SyntheticSmokeDataset
+    length: 4
+    seed: 7
+  validation_dataset:
+    _target_: scripts.icg_training_lib.SyntheticSmokeDataset
+    length: 2
+    seed: 101
+  train_collate:
+    _target_: scripts.icg_training_lib.SyntheticSmokeCollator
+  validation_collate:
+    _target_: scripts.icg_training_lib.SyntheticSmokeCollator
+  train_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    shuffle: true
+    num_workers: 0
+  validation_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    shuffle: false
+    num_workers: 0
+model:
+  _target_: scripts.icg_training_lib.SyntheticICGNetLikeModel
+  num_queries: 4
+  num_classes: 7
+  hidden_dim: 32
+loss:
+  _target_: icg_net.trainer.criterion.criterion.SetCriterionWithWidth
+  class_weights: -1
+  eos_coef: 0.1
+  exclude_sdf_class: []
+  grasp_loss_type: bce
+  losses:
+    - labels
+    - masks
+    - sdf
+    - grasps
+  num_classes: 7
+  num_points: -1
+  sdf_clip: 0.05
+  sdf_loss_type: bce
+matcher:
+  _target_: icg_net.trainer.matcher.instance_matcher.HungarianMatcher
+  cost_class: 1.0
+  cost_dice: 1.0
+  cost_mask: 1.0
+  cost_pose: 0.0
+  costs:
+    grasp_scene: 1.0
+    grasp_width_scene: 1.0
+    scene_occ: 1.0
+    sdf: 1.0
+    sdf_matching: 0.0
+  num_points: -1
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 0.001
+trainer:
+  max_epochs: 1
